@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/@ixon-cdk/core/config/schema.json",
+  "prefix": "app",
+  "components": {
+    "user-access-graph": {
+      "runner": {
+        "build": {
+          "builder": "@ixon-cdk/svelte-builder:browser",
+          "input": "user-access-graph.svelte"
+        }
+      }
+    }
+  }
+}
