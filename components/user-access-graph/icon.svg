@@ -1,0 +1,19 @@
+<svg width="35" height="27" viewBox="0 0 35 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<g clip-path="url(#clip0_1_14)">
+		<line x1="27.2213" y1="10.041" x2="14.2213" y2="7.04103" stroke="#999999" stroke-opacity="0.7" stroke-width="0.7" />
+		<line x1="6.70192" y1="19.8166" x2="14.7019" y2="6.81657" stroke="#999999" stroke-opacity="0.7" stroke-width="0.7" />
+		<line x1="22.0019" y1="20.1834" x2="14.0019" y2="7.18343" stroke="#999999" stroke-opacity="0.7" stroke-width="0.7" />
+		<line x1="27.1008" y1="16.2878" x2="14.1008" y2="7.28777" stroke="#999999" stroke-opacity="0.7" stroke-width="0.7" />
+		<path d="M33 0.5H2C1.17157 0.5 0.5 1.17157 0.5 2V25C0.5 25.8284 1.17157 26.5 2 26.5H33C33.8284 26.5 34.5 25.8284 34.5 25V2C34.5 1.17157 33.8284 0.5 33 0.5Z" stroke="black" stroke-opacity="0.26" />
+		<circle cx="14.5" cy="7.5" r="2.35" fill="#FF7F0E" stroke="white" stroke-width="0.3" />
+		<circle cx="6.5" cy="20.5" r="2.35" fill="#2CA02C" stroke="white" stroke-width="0.3" />
+		<circle cx="22.5" cy="20.5" r="2.35" fill="#D62728" stroke="white" stroke-width="0.3" />
+		<circle cx="27.5" cy="10.5" r="2.35" fill="#1F77B4" stroke="white" stroke-width="0.3" />
+		<circle cx="27.5" cy="16.5" r="2.35" fill="#D62728" stroke="white" stroke-width="0.3" />
+	</g>
+	<defs>
+		<clipPath id="clip0_1_14">
+			<rect width="35" height="27" fill="white" />
+		</clipPath>
+	</defs>
+</svg>
