@@ -275,7 +275,7 @@
         (!!group.type || settings.showCompanyWide),
     );
     const machineGroups = data[1].filter(group => !!group.agent);
-    const agents = data[2];
+    const agents = data[2].filter(agent => !!agent.name);
     const users = data[3];
     const company = data[4];
 
@@ -704,7 +704,6 @@
 <style lang="scss">
   @import './styles/card';
   @import './styles/button';
-  @import 'typeahead-standalone/dist/basic.css';
 
   .card {
     padding: 8px;
