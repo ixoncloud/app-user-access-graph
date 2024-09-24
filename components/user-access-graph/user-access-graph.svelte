@@ -3,6 +3,10 @@
   import { onMount } from 'svelte';
   import type { ComponentContext } from '@ixon-cdk/types';
   import { runResizeObserver } from './utils/resize-observer';
+  import {
+    isTranslationKey,
+    trimNamespace,
+  } from './formatters/translation/translation.utils';
   import { UserAccessGraphService } from './user-access-graph.service';
   export let context: ComponentContext;
 
@@ -283,12 +287,16 @@
       nodes: [
         ...groupTypes.map(groupType => ({
           id: groupType.publicId,
-          name: groupType.name,
+          name: isTranslationKey(groupType.name)
+                    ? context.translate(trimNamespace(groupType.name))
+                    : groupType.name,
           group: 1,
         })),
         ...groups.map(group => ({
           id: group.publicId,
-          name: group.name,
+          name: isTranslationKey(group.name)
+                    ? context.translate(trimNamespace(group.name))
+                    : group.name,
           group: 2,
         })),
         ...users.map(user => ({
