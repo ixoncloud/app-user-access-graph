@@ -19,7 +19,7 @@ export class UserAccessGraphService {
   getGroups(): Promise<Group> {
     const url = new URL(this.context.getApiUrl('GroupList'));
     const params = {
-      fields: 'agent,publicId,name,type.publicId,type.name',
+      fields: 'agent,parent.publicId,publicId,name,type.publicId,type.name',
       'page-size': 4000,
     };
 
@@ -31,7 +31,7 @@ export class UserAccessGraphService {
   getAgents(): Promise<Agent> {
     const url = new URL(this.context.getApiUrl('AgentList'));
     const params = {
-      fields: '*,memberships.group.publicId',
+      fields: 'publicId,name,assets,memberships.group.publicId',
       'page-size': 4000,
     };
 
@@ -40,10 +40,24 @@ export class UserAccessGraphService {
     return fetch(url.toString(), { method: 'GET', headers }).then(res => res.json().then(res => res.data || []));
   }
 
+  getAssets(): Promise<Agent> {
+    const url = new URL(this.context.getApiUrl('AssetList'));
+    const params = {
+      fields: 'publicId,name,memberships.group.publicId',
+      'page-size': 4000,
+    };
+
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+    url.searchParams.append('filters', 'isnull(parent)');
+    url.searchParams.append('filters', 'eq(isLibraryAsset,"false")');
+    const headers = this.getHeaders();
+    return fetch(url.toString(), { method: 'GET', headers }).then(res => res.json().then(res => res.data || []));
+  }
+
   getUsers(): Promise<User> {
     const url = new URL(this.context.getApiUrl('UserList'));
     const params = {
-      fields: '*,memberships.group.publicId,memberships.role.publicId',
+      fields: 'publicId,name,memberships.group.publicId,memberships.role.publicId',
       'page-size': 4000,
     };
 

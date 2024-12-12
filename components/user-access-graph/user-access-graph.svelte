@@ -63,6 +63,7 @@
       service.getGroupTypes(),
       service.getGroups(),
       service.getAgents(),
+      service.getAssets(),
       service.getUsers(),
       service.getMyCompany(),
     ]).then(apiData => {
@@ -278,25 +279,31 @@
         !group.agent &&
         (!!group.type || settings.showCompanyWide),
     );
-    const machineGroups = data[1].filter(group => !!group.agent);
-    const agents = data[2].filter(agent => !!agent.name);
-    const users = data[3];
-    const company = data[4];
+    const machineGroups = data[1].filter(
+      group => !!group.agent || !!group.asset,
+    );
+    const agents = data[2].filter(
+      agent => !!agent.name && agent.assets.length === 0,
+    );
+    const assets = data[3];
+    const devices = [...agents, ...assets];
+    const users = data[4];
+    const company = data[5];
 
     let pre_graph = {
       nodes: [
         ...groupTypes.map(groupType => ({
           id: groupType.publicId,
           name: isTranslationKey(groupType.name)
-                    ? context.translate(trimNamespace(groupType.name))
-                    : groupType.name,
+            ? context.translate(trimNamespace(groupType.name))
+            : groupType.name,
           group: 1,
         })),
         ...groups.map(group => ({
           id: group.publicId,
           name: isTranslationKey(group.name)
-                    ? context.translate(trimNamespace(group.name))
-                    : group.name,
+            ? context.translate(trimNamespace(group.name))
+            : group.name,
           group: 2,
         })),
         ...users.map(user => ({
@@ -304,9 +311,9 @@
           name: user.name,
           group: 3,
         })),
-        ...agents.map(agent => ({
-          id: agent.publicId,
-          name: agent.name,
+        ...devices.map(device => ({
+          id: device.publicId,
+          name: device.name,
           group: 4,
         })),
         {
@@ -338,6 +345,14 @@
             target: group.type?.publicId,
             value: 1,
           })),
+        // Groups to subgroups
+        ...groups
+          .filter(group => !!group.parent && (!group.agent || !group.asset))
+          .map(group => ({
+            source: group.publicId,
+            target: group.parent?.publicId,
+            value: 1,
+          })),
         // Users to groups
         ...users.reduce((userLinks, user) => {
           return [
@@ -366,21 +381,26 @@
                         group => group.publicId === membership.group.publicId,
                       ),
                   )
-                  .map(membership => ({
-                    source: user.publicId,
-                    target: machineGroups.find(
+                  .map(membership => {
+                    const machineGroup = machineGroups.find(
                       group => group.publicId === membership.group.publicId,
-                    )?.agent.publicId,
-                    value: 1,
-                  }))
+                    );
+                    return {
+                      source: user.publicId,
+                      target:
+                        machineGroup?.agent?.publicId ||
+                        machineGroup?.asset?.publicId,
+                      value: 1,
+                    };
+                  })
               : []),
           ];
         }, []),
-        // Agents to groups
-        ...agents.reduce((agentLinks, agent) => {
+        // Devices to groups
+        ...devices.reduce((deviceLinks, device) => {
           return [
-            ...agentLinks,
-            ...agent.memberships
+            ...deviceLinks,
+            ...device.memberships
               .filter(
                 membership =>
                   groups.find(
@@ -388,7 +408,7 @@
                   )?.name,
               )
               .map(membership => ({
-                source: agent.publicId,
+                source: device.publicId,
                 target: groups.find(
                   group => group.publicId === membership.group.publicId,
                 )?.publicId,
@@ -443,62 +463,78 @@
     }
   }
 
+  // A group should only count as connected if it is a subgroup (depends if you look from user or from agent I think)
+  function getConnectedNodes(node, fromUser) {
+    var edges = graph.links.filter(function (e) {
+      return e.source.id === node.id || e.target.id === node.id;
+    });
+    return graph.nodes.filter(
+      n =>
+        edges.find(
+          edge => edge.source.id === n.id || edge.target.id === n.id,
+        ) &&
+        (n.group === 2 ||
+          (n.group === 4 && fromUser) ||
+          (n.group === 3 && !fromUser)) &&
+        n.id !== node.id &&
+        isSubgroup(node, n, fromUser),
+    );
+  }
+
+  function isSubgroup(node, connectedNode, fromUser) {
+    if (node.group === 2 && connectedNode.group === 2) {
+      const group = data[1].find(g => g.publicId === node.id);
+      const connectedNodeGroup = data[1].find(
+        g => g.publicId === connectedNode.id,
+      );
+      if (fromUser) {
+        return connectedNodeGroup?.parent?.publicId === group.publicId;
+      }
+      return group?.parent?.publicId === connectedNodeGroup.publicId;
+    }
+    return true;
+  }
+
   function calculateConnectedEdgesAndHighlightElements() {
     focusedConnectedEdges = [];
+    let connectedNodes: any[] = [];
 
     // user
     if (clickedNode.group === 3) {
-      var edges = graph.links.filter(function (e) {
-        return e.source.id === clickedNode.id || e.target.id === clickedNode.id;
-      });
-      var connectedNodes = graph.nodes.filter(
-        node =>
-          node.id !== clickedNode.id &&
-          edges.find(
-            edge => edge.source.id === node.id || edge.target.id === node.id,
-          ) &&
-          node.group === 2,
-      );
-      var agentNodes = graph.nodes.filter(node => node.group === 4);
-      var edgesFromGroupsToAgents = graph.links.filter(function (e) {
-        return (
-          (e.source.id !== clickedNode.id &&
-            connectedNodes.find(node => node.id === e.target.id) &&
-            agentNodes.find(node => node.id === e.source.id)) ||
-          (connectedNodes.find(node => node.id === e.source.id) &&
-            e.target.id !== clickedNode.id &&
-            agentNodes.find(node => node.id === e.target.id))
-        );
-      });
-      focusedConnectedEdges = [...edges, ...edgesFromGroupsToAgents];
+      connectedNodes = [clickedNode, ...getConnectedNodes(clickedNode, true)];
+      for (let i = 0; i < connectedNodes.length; i++) {
+        // Access via subgroups
+        if (connectedNodes[i].group === 2) {
+          connectedNodes = [
+            ...connectedNodes,
+            ...getConnectedNodes(connectedNodes[i], true).filter(
+              node => !connectedNodes.some(n => n.id === node.id),
+            ),
+          ];
+        }
+      }
     }
 
     // agent
     if (clickedNode.group === 4) {
-      var edges = graph.links.filter(function (e) {
-        return e.source.id === clickedNode.id || e.target.id === clickedNode.id;
-      });
-      var connectedNodes = graph.nodes.filter(
-        node =>
-          node.id !== clickedNode.id &&
-          edges.find(
-            edge => edge.source.id === node.id || edge.target.id === node.id,
-          ) &&
-          node.group === 2,
-      );
-      var userNodes = graph.nodes.filter(node => node.group === 3);
-      var edgesFromGroupsToUsers = graph.links.filter(function (e) {
-        return (
-          (e.source.id !== clickedNode.id &&
-            connectedNodes.find(node => node.id === e.target.id) &&
-            userNodes.find(node => node.id === e.source.id)) ||
-          (connectedNodes.find(node => node.id === e.source.id) &&
-            e.target.id !== clickedNode.id &&
-            userNodes.find(node => node.id === e.target.id))
-        );
-      });
-      focusedConnectedEdges = [...edges, ...edgesFromGroupsToUsers];
+      connectedNodes = [clickedNode, ...getConnectedNodes(clickedNode, false)];
+      for (let i = 0; i < connectedNodes.length; i++) {
+        // Access via subgroups
+        if (connectedNodes[i].group === 2) {
+          connectedNodes = [
+            ...connectedNodes,
+            ...getConnectedNodes(connectedNodes[i], false).filter(
+              node => !connectedNodes.some(n => n.id === node.id),
+            ),
+          ];
+        }
+      }
     }
+    focusedConnectedEdges = graph.links.filter(
+      e =>
+        connectedNodes.some(n => e.source.id === n.id) &&
+        connectedNodes.some(n => e.target.id === n.id),
+    );
     focusElements();
   }
 
