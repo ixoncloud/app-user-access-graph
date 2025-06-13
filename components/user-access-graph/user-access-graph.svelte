@@ -254,7 +254,9 @@
     }
 
     function dragstarted(e, d) {
-      if (!e.active) simulation.alphaTarget(0.3).restart();
+      if (!e.active) {
+        simulation.alphaTarget(0.3).restart();
+      }
       d.fx = d.x;
       d.fy = d.y;
     }
@@ -265,7 +267,9 @@
     }
 
     function dragended(e, d) {
-      if (!e.active) simulation.alphaTarget(0);
+      if (!e.active) {
+        simulation.alphaTarget(0);
+      }
       d.fx = null;
       d.fy = null;
     }
@@ -746,8 +750,8 @@
 </div>
 
 <style lang="scss">
-  @import './styles/card';
-  @import './styles/button';
+  @use './styles/card' as *;
+  @use './styles/button' as *;
 
   .card {
     padding: 8px;
@@ -762,13 +766,13 @@
         width: 150px;
         height: 25px;
         padding: 0px 35px 0px 5px;
-        border: 1px solid rgba(0, 0, 0, 0.12);
+        border: 1px solid rgb(0 0 0 / 12%);
         border-radius: 4px;
         outline: none;
-      }
 
-      input:focus {
-        border: 1px solid lightgray;
+        &:focus {
+          border: 1px solid lightgray;
+        }
       }
 
       ul {
@@ -777,20 +781,22 @@
         margin: 0;
         margin-top: 4px;
         width: 100%;
+        color: rgb(0 0 0 / 87%);
 
-        li.typeahead-objects:first-of-type {
-          border-top: 1px solid rgba(0, 0, 0, 0.12);
-        }
         li.typeahead-objects {
           list-style: none;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-          border-right: 1px solid rgba(0, 0, 0, 0.12);
-          border-left: 1px solid rgba(0, 0, 0, 0.12);
+          border-bottom: 1px solid rgb(0 0 0 / 12%);
+          border-right: 1px solid rgb(0 0 0 / 12%);
+          border-left: 1px solid rgb(0 0 0 / 12%);
           margin: 0;
           padding: 8px;
           cursor: pointer;
           background-color: #fff;
           display: block;
+
+          &:first-of-type {
+            border-top: 1px solid rgb(0 0 0 / 12%);
+          }
 
           &.focused {
             background-color: #f5f5f5;
@@ -829,5 +835,6 @@
   .svg-container {
     width: 100%;
     height: calc(100% - 20px);
+    fill: var(--card-color);
   }
 </style>
